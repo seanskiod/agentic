@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrandRank.AI Agentic Commerce Rankings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.2);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .brand-filter {
+            padding: 10px 18px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .brand-filter:hover {
+            background: rgba(0,212,255,0.2);
+            border-color: #00d4ff;
+            transform: translateY(-1px);
+        }
+
+        .brand-filter.active {
+            background: #00d4ff;
+            border-color: #00d4ff;
+            color: #0a0e1a;
+            font-weight: 600;
+        }
+
+        .clear-filters {
+            padding: 10px 18px;
+            background: rgba(255,107,107,0.2);
+            border: 1px solid rgba(255,107,107,0.3);
+            border-radius: 6px;
+            color: #ff6b6b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .clear-filters:hover {
+            background: rgba(255,107,107,0.3);
+            transform: translateY(-1px);
+        }
+
+        .table-container {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 25px;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            min-width: 1200px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            vertical-align: top;
+        }
+
+        .data-table th {
+            background: rgba(0,212,255,0.1);
+            color: #00d4ff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .question-col {
+            background: rgba(255,255,255,0.08);
+            font-weight: 500;
+            width: 25%;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            color: #4ecdc4;
+        }
+
+        .question-col th {
+            position: sticky;
+            left: 0;
+            z-index: 15;
+            background: rgba(0,212,255,0.15);
+        }
+
+        .consensus-col {
+            display: none;
+        }
+
+        .consensus-col th {
+            display: none;
+        }
+
+        .llm-col {
+            width: 11%;
+            min-width: 110px;
+            font-size: 0.9rem;
+            color: #ffffff;
+        }
+
+        .category-header {
+            background: rgba(0,212,255,0.2) !important;
+        }
+        
+        .category-header td {
+            background: rgba(0,212,255,0.2) !important;
+            color: #00d4ff !important;
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .brand-highlight {
+            background: rgba(78,205,196,0.2) !important;
+            color: #4ecdc4 !important;
+            font-weight: 600;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .brand-highlight::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #4ecdc4;
+            border-radius: 2px;
+        }
+
+        .hidden-row {
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+
+        .stat-card h3 {
+            color: #00d4ff;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .stat-card ul {
+            list-style: none;
+            line-height: 1.8;
+        }
+
+        .stat-card li {
+            padding: 3px 0;
+            opacity: 0.9;
+        }
+
+        .stat-card strong {
+            color: #4ecdc4;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .footer h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .footer p {
+            line-height: 1.6;
+            opacity: 0.8;
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+
+        .contact-info {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+            font-weight: 500;
+            color: #00d4ff;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Agentic Commerce Leadership Index</h1>
+            <p>Q2 2025 | Enterprise Decision Intelligence | Powered by BrandRank</p>
+        </div>
+
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search questions, brands, or categories..." id="searchInput">
+            </div>
+            <div class="filter-buttons" id="filterButtons"></div>
+            <button class="clear-filters" onclick="clearFilters()">Clear Filters</button>
+        </div>
+
+        <div class="table-container">
+            <table class="data-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th class="question-col">Question</th>
+                        <th class="llm-col">ChatGPT</th>
+                        <th class="llm-col">ChatGPT Deep Research</th>
+                        <th class="llm-col">Google Gemini</th>
+                        <th class="llm-col">Claude</th>
+                        <th class="llm-col">Meta/Llama</th>
+                        <th class="llm-col">Co-Pilot</th>
+                        <th class="llm-col">Perplexity</th>
+                        <th class="llm-col">Grok/X</th>
+                        <th class="llm-col">DeepSeek</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Methodology</h3>
+                <ul>
+                    <li>25 strategic queries across 5 agentic commerce categories</li>
+                    <li>9 leading AI answer engines interrogated</li>
+                    <li>Consensus weighted with ChatGPT counting as 2 LLMs</li>
+                    <li>ChatGPT DeepResearch treated independently</li>
+                    <li>Queries designed to elicit organic brand mentions</li>
+                </ul>
+            </div>
+            <div class="stat-card">
+                <h3>Key Findings</h3>
+                <ul>
+                    <li><strong>Stripe dominates:</strong> 6 consensus wins, leads developer categories</li>
+                    <li><strong>Visa leads partnerships:</strong> 67% consensus on strategic alliances</li>
+                    <li><strong>Amazon strong in platforms:</strong> 2 consensus wins in commerce</li>
+                    <li><strong>Developer gap critical:</strong> API-first companies outrank traditional</li>
+                    <li><strong>Trust vs. Innovation:</strong> Traditional brands excel in security</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>About BrandRank.AI</h3>
+            <p>
+                We help Brands measure, protect, and grow trust through the power of AI-driven search and discovery. 
+                Combining AI with expert insight, we monitor the major AI "Answer Engines" to pinpoint vulnerabilities 
+                and opportunities, identify key insights driving purchase behavior, and uncover category needs and 
+                opportunities to strengthen brand equity and consumer loyalty.
+            </p>
+            <div class="contact-info">
+                Contact: Pete Blackshaw, Founder & CEO: pete@brandrank.ai | 513-739-4969
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data from the original table - reorganized into 3 categories
+        const tableData = [
+            {
+                category: "Leadership",
+                questions: [
+                    {
+                        question: "Who is the most advanced company in enabling AI-led, autonomous online payments?",
+                        consensus: "Visa",
+                        responses: ["Visa", "Mastercard", "Amazon", "Stripe", "Stripe", "Skyfire Systems", "Visa", "Visa", "Stripe"]
+                    },
+                    {
+                        question: "Which brand is best positioned to lead in agentic commerce?",
+                        consensus: "Amazon",
+                        responses: ["Amazon", "Amazon", "Visa", "Amazon", "Shopify", "Amazon", "Stripe", "Mastercard", "PayPal"]
+                    },
+                    {
+                        question: "Who is the most recognized innovator in intelligent, AI-driven transaction systems?",
+                        consensus: "Stripe",
+                        responses: ["Stripe", "Google", "Google Cloud", "PayPal", "PayPal", "Visa", "Mastercard", "PayPal", "Square (Block, Inc.)"]
+                    },
+                    {
+                        question: "Which company is furthest along in building a platform for intelligent commerce?",
+                        consensus: "Shopify",
+                        responses: ["Shopify", "Visa", "Amazon", "Shopify", "Amazon", "Visa", "Shopify", "Stripe", "Amazon (Amazon Pay & AWS Commerce)"]
+                    },
+                    {
+                        question: "Who is the top financial brand powering agent-based purchasing experiences?",
+                        consensus: "Visa",
+                        responses: ["PayPal", "PayPal", "Visa", "Visa", "Visa", "Mastercard", "American Express", "Visa", "Visa"]
+                    },
+                    {
+                        question: "Which brand powers the most frictionless AI-led shopping experiences today?",
+                        consensus: "Amazon",
+                        responses: ["Instacart", "Perplexity", "Amazon", "Amazon", "Apple", "Amazon", "Shopify", "Amazon", "Alibaba (Alipay & AI commerce)"]
+                    },
+                    {
+                        question: "Which financial brand has the most strategic partnerships in the AI commerce space?",
+                        consensus: "Visa",
+                        responses: ["Mastercard", "Visa", "Visa", "Visa", "JPMorgan Chase", "Visa", "Mastercard", "Visa", "Visa"]
+                    },
+                    {
+                        question: "Which brand is playing the biggest role in shaping standards for agent-led commerce?",
+                        consensus: "Visa",
+                        responses: ["OpenAI (via ChatGPT Plugins & APIs)", "Mastercard", "Visa", "Mastercard", "World Wide Web Consortium (W3C)", "commercetools", "Visa", "Visa", "World Economic Forum"]
+                    }
+                ]
+            },
+            {
+                category: "Technology",
+                questions: [
+                    {
+                        question: "Who offers the most developer-friendly APIs for agentic commerce?",
+                        consensus: "Stripe",
+                        responses: ["Stripe", "Stripe", "PayPal", "Stripe", "Google", "PayPal", "Stripe", "Stripe", "Plaid"]
+                    },
+                    {
+                        question: "Which company provides the best infrastructure for autonomous purchasing systems?",
+                        consensus: "Adyen",
+                        responses: ["Adyen", "Adyen", "Keelvar", "Adyen", "Google Cloud", "Visa", "Adyen", "Visa", "Adyen"]
+                    },
+                    {
+                        question: "Who is the best platform for integrating AI agents into payment flows?",
+                        consensus: "Stripe",
+                        responses: ["Square", "PayPal", "LangChain", "Braintree", "Braintree", "Stripe", "Stripe", "PayPal", "Stripe"]
+                    },
+                    {
+                        question: "Which brand offers the most scalable architecture for agent-led payments?",
+                        consensus: "Mastercard",
+                        responses: ["Checkout.com", "Marqeta", "Google", "Checkout.com", "Salesforce", "Mastercard", "Adyen", "Mastercard", "Google (Google Pay & Cloud)"]
+                    },
+                    {
+                        question: "Who delivers the most seamless integration between AI agents and payments?",
+                        consensus: "Stripe",
+                        responses: ["Plaid", "Stripe", "Visa", "PayPal", "Microsoft", "Stripe", "Stripe", "Stripe", "Shopify (Shopify Payments)"]
+                    },
+                    {
+                        question: "Who is the most integrated with AI foundation model companies for payments?",
+                        consensus: "Stripe",
+                        responses: ["Anthropic", "Stripe", "Stripe", "OpenAI", "NVIDIA", "Stripe", "Stripe", "Mastercard", "OpenAI (partnered with Stripe & others)"]
+                    },
+                    {
+                        question: "Who is the go-to partner for AI startups building autonomous shopping tools?",
+                        consensus: "Stripe",
+                        responses: ["Y Combinator", "Shopify", "OpenAI", "Stripe", "Techstars", "AiFi", "Stripe", "Stripe", "Y Combinator (backing AI commerce startups)"]
+                    },
+                    {
+                        question: "Who is the top provider enabling smart assistants to complete everyday transactions?",
+                        consensus: "Google",
+                        responses: ["Google Assistant (with Google Pay)", "Google", "Google", "Google Pay", "Amazon Alexa", "Microsoft", "Google", "Google", "Microsoft (with Copilot & Azure AI commerce)"]
+                    },
+                    {
+                        question: "Which payment system is best for AI agents managing subscriptions and renewals?",
+                        consensus: "Stripe",
+                        responses: ["Zuora", "Stripe", "Maxio", "Recurly", "Recurly", "Visa", "Apple Pay", "Stripe", "Zuora"]
+                    }
+                ]
+            },
+            {
+                category: "Trust",
+                questions: [
+                    {
+                        question: "Which brand is the most trusted for securing AI-driven financial transactions?",
+                        consensus: "Mastercard",
+                        responses: ["Apple", "Visa", "FICO", "Mastercard", "Mastercard", "Temenos", "Mastercard", "Mastercard", "Mastercard"]
+                    },
+                    {
+                        question: "Who offers the most reliable fraud protection for AI-powered purchases?",
+                        consensus: "American Express",
+                        responses: ["American Express", "Forter", "IBM Safer Payments", "Fraud.net", "Sift Science", "WooshPay", "Visa", "Braintree", "American Express"]
+                    },
+                    {
+                        question: "Which provider is best equipped to ensure user-permission-based AI transactions?",
+                        consensus: "Microsoft",
+                        responses: ["Microsoft", "Mastercard", "Velotix", "Plaid", "OneTrust", "Permit.io", "Plaid", "Visa", "IBM (IBM Watson Commerce)"]
+                    },
+                    {
+                        question: "Who is the top player in enabling secure, tokenized commerce through AI agents?",
+                        consensus: "Circle",
+                        responses: ["Circle", "Visa", "Mastercard", "Circle", "IBM", "Mastercard", "Stripe", "Mastercard", "Token.io"]
+                    },
+                    {
+                        question: "What financial brand is most known for securing agent-led payments?",
+                        consensus: "Visa",
+                        responses: ["Chase (JPMorgan)", "PayPal", "Visa", "Square", "American Express", "Mastercard", "American Express", "Visa", "J.P. Morgan Chase"]
+                    },
+                    {
+                        question: "Who is the best provider for enabling AI agents to book travel and pay automatically?",
+                        consensus: "Expedia",
+                        responses: ["Expedia", "Expedia", "MyTrip.AI", "Expedia", "Expedia", "Google", "Tripadvisor", "Expedia", "Booking.com (with AI-powered payments)"]
+                    },
+                    {
+                        question: "Who enables the smoothest checkout process when AI agents buy on behalf of users?",
+                        consensus: "Apple Pay",
+                        responses: ["Shop Pay (by Shopify)", "PayPal", "Visa", "Apple Pay", "Facebook", "Google", "Stripe", "PayPal", "Apple (Apple Pay & Siri integration)"]
+                    },
+                    {
+                        question: "Who is the most influential company helping define ethical AI transaction frameworks?",
+                        consensus: "Accenture",
+                        responses: ["World Economic Forum", "Microsoft", "IBM", "IBM", "Accenture", "Salesforce", "OpenAI", "World Economic Forum", "Accenture"]
+                    }
+                ]
+            }
+        ];
+
+        const llmHeaders = ["ChatGPT", "ChatGPT Deep Research", "Google Gemini", "Claude", "Meta/Llama", "Co-Pilot", "Perplexity", "Grok/X", "DeepSeek"];
+        
+        let allBrands = new Set();
+        let activeFilters = new Set();
+        let originalData = [];
+
+        // Extract all brands and prepare data
+        function initializeData() {
+            tableData.forEach(category => {
+                category.questions.forEach(q => {
+                    allBrands.add(q.consensus);
+                    q.responses.forEach(response => {
+                        // Extract main brand name from complex responses
+                        const brandName = response.split('(')[0].trim();
+                        allBrands.add(brandName);
+                    });
+                });
+            });
+
+            // Create filter buttons for top brands only
+            const topBrands = ['Visa', 'Stripe', 'Amazon', 'Mastercard', 'Google', 'PayPal'];
+            const filterContainer = document.getElementById('filterButtons');
+            topBrands.forEach(brand => {
+                const button = document.createElement('button');
+                button.className = 'brand-filter';
+                button.textContent = brand;
+                button.onclick = () => toggleFilter(brand, button);
+                filterContainer.appendChild(button);
+            });
+
+            // Populate table
+            populateTable();
+            originalData = Array.from(document.querySelectorAll('#tableBody tr'));
+        }
+
+        function populateTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            tableData.forEach(category => {
+                // Add category header - show LLMs for Technology and Trust sections
+                const categoryRow = document.createElement('tr');
+                categoryRow.className = 'category-header';
+                if (category.category === 'Leadership') {
+                    categoryRow.innerHTML = `
+                        <td class="question-col category-header">${category.category}</td>
+                        ${llmHeaders.map(() => `<td class="category-header"></td>`).join('')}
+                    `;
+                } else {
+                    categoryRow.innerHTML = `
+                        <td class="question-col category-header">${category.category}</td>
+                        ${llmHeaders.map(header => `<td class="category-header">${header}</td>`).join('')}
+                    `;
+                }
+                tbody.appendChild(categoryRow);
+
+                // Add questions
+                category.questions.forEach(q => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="question-col">${q.question}</td>
+                        ${q.responses.map(response => 
+                            `<td class="llm-col ${shouldHighlight(response) ? 'brand-highlight' : ''}">${response}</td>`
+                        ).join('')}
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
+        function shouldHighlight(text) {
+            if (activeFilters.size === 0) return false;
+            return Array.from(activeFilters).some(filter => 
+                text.toLowerCase().includes(filter.toLowerCase())
+            );
+        }
+
+        function toggleFilter(brand, button) {
+            if (activeFilters.has(brand)) {
+                activeFilters.delete(brand);
+                button.classList.remove('active');
+            } else {
+                activeFilters.add(brand);
+                button.classList.add('active');
+            }
+            
+            applyFilters();
+        }
+
+        function clearFilters() {
+            activeFilters.clear();
+            document.querySelectorAll('.brand-filter').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#tableBody tr');
+
+            rows.forEach(row => {
+                const isCategory = row.querySelector('.category-header');
+                if (isCategory) {
+                    row.style.display = '';
+                    return;
+                }
+
+                const question = row.cells[0].textContent.toLowerCase();
+                const allCells = Array.from(row.cells).map(cell => cell.textContent.toLowerCase());
+                
+                // Search filter
+                const matchesSearch = searchTerm === '' || 
+                    question.includes(searchTerm) || 
+                    allCells.some(cell => cell.includes(searchTerm));
+
+                // Brand filter
+                const matchesBrand = activeFilters.size === 0 || 
+                    Array.from(activeFilters).some(filter => 
+                        allCells.some(cell => cell.includes(filter.toLowerCase()))
+                    );
+
+                row.style.display = matchesSearch && matchesBrand ? '' : 'none';
+            });
+
+            // Re-highlight
+            populateTable();
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializeData);
+    </script>
+</body>
+</html>
